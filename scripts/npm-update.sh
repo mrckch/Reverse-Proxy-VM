@@ -108,8 +108,18 @@ step_system() {
     wait_for_npm || { echo "FEHLER: NPM nach dem System-Update nicht erreichbar."; exit 1; }
 }
 
+# Debian legt /var/run/reboot-required nur mit Zusatzpaketen an — deshalb
+# zusätzlich prüfen, ob ein neuerer Kernel installiert ist als gerade läuft.
+reboot_needed() {
+    [[ -f /var/run/reboot-required ]] && return 0
+    local newest
+    newest=$(find /boot -maxdepth 1 -name 'vmlinuz-*' -printf '%f\n' \
+        | sed 's/^vmlinuz-//' | sort -V | tail -1)
+    [[ -n "$newest" && "$newest" != "$(uname -r)" ]]
+}
+
 step_reboot() {
-    if [[ ! -f /var/run/reboot-required ]]; then
+    if ! reboot_needed; then
         echo "→ Kein Neustart nötig."
         return 0
     fi
