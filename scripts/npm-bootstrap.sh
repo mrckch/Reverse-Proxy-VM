@@ -324,7 +324,7 @@ phase_b_sanity_check_ip() {
 }
 
 phase_b_packages() {
-    echo "=== Phase B [1/4] System-Update + Basis-Pakete ==="
+    echo "=== Phase B [1/5] System-Update + Basis-Pakete ==="
     DEBIAN_FRONTEND=noninteractive apt-get update
     DEBIAN_FRONTEND=noninteractive apt-get -y \
         -o Dpkg::Options::="--force-confdef" \
@@ -334,7 +334,7 @@ phase_b_packages() {
 }
 
 phase_b_docker() {
-    echo "=== Phase B [2/4] Docker Engine + Compose installieren ==="
+    echo "=== Phase B [2/5] Docker Engine + Compose installieren ==="
     if command -v docker >/dev/null 2>&1; then
         echo "→ Docker bereits installiert: $(docker --version)"
     else
@@ -358,7 +358,7 @@ https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_C
 }
 
 phase_b_ufw() {
-    echo "=== Phase B [3/4] Firewall (ufw) ==="
+    echo "=== Phase B [3/5] Firewall (ufw) ==="
     ufw default deny incoming  >/dev/null
     ufw default allow outgoing >/dev/null
     ufw allow OpenSSH          >/dev/null
@@ -369,7 +369,7 @@ phase_b_ufw() {
 }
 
 phase_b_npm() {
-    echo "=== Phase B [4/4] NPM-Container starten ==="
+    echo "=== Phase B [4/5] NPM-Container starten ==="
     mkdir -p "$NPM_DIR" "$NPM_DIR/data" "$NPM_DIR/letsencrypt"
 
     # docker-compose.yml aus dem Repo holen
@@ -410,6 +410,18 @@ EOF
     done
 }
 
+phase_b_maintenance() {
+    echo "=== Phase B [5/5] Tägliches Backup + automatische Sicherheitsupdates ==="
+    local dir
+    dir=$(dirname "$COMPOSE_SRC")/../scripts
+    if [[ -x "$dir/npm-backup.sh" && -x "$dir/npm-auto-updates.sh" ]]; then
+        "$dir/npm-backup.sh" --install
+        "$dir/npm-auto-updates.sh"
+    else
+        echo "WARN: $dir nicht gefunden — Backup + Auto-Updates später einrichten (siehe docs/npm-setup.md)."
+    fi
+}
+
 phase_b_finalize() {
     systemctl disable "${RESUME_SERVICE}" >/dev/null 2>&1 || true
     rm -f "/etc/systemd/system/${RESUME_SERVICE}"
@@ -426,6 +438,7 @@ phase_b() {
     phase_b_docker
     phase_b_ufw
     phase_b_npm
+    phase_b_maintenance
     phase_b_finalize
 
     local addr
@@ -447,13 +460,10 @@ Schritt-für-Schritt-Anleitung für die ersten Sites:
   /opt/npm-bootstrap/docs/npm-setup.md  (im Repo)
   oder online: https://github.com/mrckch/Reverse-Proxy-VM/blob/main/docs/npm-setup.md
 
-Update später:
-  cd /opt/npm
-  docker compose pull
-  docker compose up -d
+Update später (einmal im Monat):
+  cd /opt/npm-bootstrap && git pull && ./scripts/npm-update.sh
 
-Backup (manuell):
-  tar czf npm-backup-\$(date +%F).tar.gz -C /opt/npm data letsencrypt
+Backup läuft täglich um 03:00 nach /var/backups/npm (von Hand: npm-backup)
 
 EOF
 }

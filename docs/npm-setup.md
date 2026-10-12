@@ -134,20 +134,42 @@ Voraussetzung: A-Record `pihole.beispiel.de` zeigt auf die NPM-VM-IP
 
 ## Phase 5 — Backup einrichten
 
-NPM bietet kein Auto-Backup, aber Export ist trivial. Auf der VM **als root**:
+NPM bietet kein Auto-Backup. Das Bootstrap richtet deshalb ein tägliches
+Backup ein. Falls deine VM älter ist, einmalig auf der VM **als root**:
 
 ```bash
-# Manuelles Backup (lokale tar.gz)
-tar czf /root/npm-backup-$(date +%F).tar.gz -C /opt/npm data letsencrypt
-
-# Automatisches täglich um 03:00 (cron):
-echo "0 3 * * * root tar czf /root/npm-backup-\$(date +\%F).tar.gz -C /opt/npm data letsencrypt && find /root/npm-backup-*.tar.gz -mtime +14 -delete" \
-    > /etc/cron.d/npm-backup
+cd /opt/npm-bootstrap
+git pull
+./scripts/npm-backup.sh --install
 ```
 
-(Letztere Zeile macht täglich Backup um 03:00, behält 14 Tage.)
+Danach läuft jede Nacht um 03:00 ein Backup — ohne dass der Proxy dafür
+anhält:
 
-Die Backup-Datei kannst du regelmäßig auf einen anderen Rechner / NAS ziehen.
+- Ablage: `/var/backups/npm/npm-backup-<Datum>.tar.gz`
+- Inhalt: NPM-Konfiguration, Datenbank, alle Zertifikate (keine Logs)
+- Es bleiben immer nur die **letzten 14** Backups liegen, ältere werden
+  gelöscht. Sind weniger als 2 GB frei, wird gar nicht gesichert — die
+  Platte kann durch Backups nicht volllaufen.
+- Protokoll: `/var/log/npm-backup.log`
+
+Backup sofort von Hand auslösen:
+
+```bash
+npm-backup
+```
+
+Die Backups liegen auf der VM selbst. Geht die VM kaputt, sind sie mit
+weg — zieh sie regelmäßig auf einen anderen Rechner / NAS.
+
+### Wiederherstellen
+
+```bash
+cd /opt/npm
+docker compose down
+tar xzf /var/backups/npm/npm-backup-<Datum>.tar.gz -C /opt/npm
+docker compose up -d
+```
 
 ## Phase 6 — Updates (VM + NPM)
 
@@ -171,7 +193,30 @@ Am Ende fragt es, ob die VM neu starten soll, falls ein neuer Kernel
 installiert wurde (~1 Minute Ausfall). Mit `--reboot` startet es ohne
 Rückfrage neu.
 
-Nur NPM aktualisieren, ohne den Rest (neue Versionen siehe
+### Automatische Sicherheitsupdates
+
+Das Bootstrap richtet sie mit ein. Für ältere VMs einmalig **als root**:
+
+```bash
+cd /opt/npm-bootstrap
+./scripts/npm-auto-updates.sh
+```
+
+Debian spielt Sicherheitsupdates dann täglich von selbst ein. Braucht ein
+Update einen Neustart (z.B. neuer Kernel), startet die VM um **04:30**
+von selbst neu (~1 Minute Ausfall). Alte Kernel werden automatisch
+entfernt.
+
+**Nicht** automatisch aktualisiert werden Docker und NPM selbst — dafür
+bleibt `npm-update.sh` einmal im Monat nötig.
+
+Neustart lieber selbst bestimmen? In
+`/etc/apt/apt.conf.d/52npm-unattended-upgrades` bei `Automatic-Reboot`
+aus `"true"` ein `"false"` machen.
+
+### Nur NPM aktualisieren
+
+Ohne den Rest (neue Versionen siehe
 https://github.com/NginxProxyManager/nginx-proxy-manager/releases):
 
 ```bash

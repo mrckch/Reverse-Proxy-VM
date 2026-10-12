@@ -32,11 +32,13 @@ Bootstrap-Scripts, die alles abnehmen.
 - NPM-Datenbank (liegt unter `/opt/npm/data/`, nie im Repo)
 
 ## Stand des Projekts
-- [ ] VM auf Proxmox erstellt
-- [ ] Bootstrap durchgelaufen
-- [ ] Erstes Login in NPM-Web-UI + Default-Passwort geändert
-- [ ] Erste Site (Domain → Backend) erfolgreich angelegt
-- [ ] Backup-Strategie eingerichtet (siehe docs/npm-setup.md Phase 5)
+- [x] VM auf Proxmox erstellt
+- [x] Bootstrap durchgelaufen
+- [x] Erstes Login in NPM-Web-UI + Default-Passwort geändert
+- [x] Erste Site (Domain → Backend) erfolgreich angelegt
+- [x] Backup-Strategie eingerichtet (täglich 03:00, siehe docs/npm-setup.md Phase 5)
+- [x] Automatische Sicherheitsupdates (unattended-upgrades, Reboot 04:30)
+- [ ] Backups zusätzlich außerhalb der VM ablegen (NAS o.ä.)
 
 (Diese Checkliste bei Fortschritt aktualisieren!)
 
@@ -44,7 +46,8 @@ Bootstrap-Scripts, die alles abnehmen.
 - `cd /opt/npm && docker compose ps` — Status des NPM-Containers
 - `cd /opt/npm && docker compose logs npm` — Logs
 - `cd /opt/npm && docker compose pull && docker compose up -d` — Update
-- `tar czf /root/npm-backup-$(date +%F).tar.gz -C /opt/npm data letsencrypt` — Backup
+- `cd /opt/npm-bootstrap && git pull && ./scripts/npm-update.sh` — Komplett-Update (Backup, Debian, Docker, NPM)
+- `npm-backup` — Backup sofort auslösen (liegt unter `/var/backups/npm/`)
 
 ## Historie
 Frühere Repo-Versionen enthielten ein HA-Setup mit zwei nginx-Nodes,

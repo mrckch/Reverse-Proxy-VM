@@ -46,8 +46,8 @@ npm_version() {
 }
 
 wait_for_npm() {
-    local i
-    for i in $(seq 1 60); do
+    local _
+    for _ in $(seq 1 60); do
         [[ -n "$(npm_version)" ]] && return 0
         sleep 2
     done
