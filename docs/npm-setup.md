@@ -149,9 +149,30 @@ echo "0 3 * * * root tar czf /root/npm-backup-\$(date +\%F).tar.gz -C /opt/npm d
 
 Die Backup-Datei kannst du regelmäßig auf einen anderen Rechner / NAS ziehen.
 
-## Phase 6 — Update von NPM
+## Phase 6 — Updates (VM + NPM)
 
-Wenn eine neue NPM-Version draußen ist (siehe https://github.com/NginxProxyManager/nginx-proxy-manager/releases):
+Der Proxy ist von außen erreichbar — halte ihn aktuell, am besten einmal
+im Monat. Auf der VM **als root**:
+
+```bash
+cd /opt/npm-bootstrap
+git pull
+./scripts/npm-update.sh
+```
+
+Das Script erledigt alles in einem Rutsch:
+1. Neues NPM-Image laden
+2. Backup von Daten + Zertifikaten nach `/root/npm-pre-update-….tar.gz`
+   (der Proxy ist dafür wenige Sekunden weg)
+3. NPM mit der neuen Version starten und prüfen
+4. Debian-Pakete inkl. Kernel und Docker aktualisieren
+
+Am Ende fragt es, ob die VM neu starten soll, falls ein neuer Kernel
+installiert wurde (~1 Minute Ausfall). Mit `--reboot` startet es ohne
+Rückfrage neu.
+
+Nur NPM aktualisieren, ohne den Rest (neue Versionen siehe
+https://github.com/NginxProxyManager/nginx-proxy-manager/releases):
 
 ```bash
 cd /opt/npm
