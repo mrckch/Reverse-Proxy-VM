@@ -39,9 +39,9 @@ Bootstrap-Scripts, die alles abnehmen.
 - [x] Erstes Login in NPM-Web-UI + Default-Passwort geändert
 - [x] Erste Site (Domain → Backend) erfolgreich angelegt
 - [x] Backup-Strategie eingerichtet (täglich 03:00, siehe docs/npm-setup.md Phase 5)
-- [x] Automatische Sicherheitsupdates (unattended-upgrades, Reboot 04:30)
-- [ ] NPM-Image-Update freitags 17:00 (`npm-image-update.sh --install`,
-      hängt sich in guest-autoupdate ein)
+- [x] ~~unattended-upgrades mit Reboot 04:30~~ — ersetzt durch Freitags-Update (Hauskonvention: nie automatisch neu starten)
+- [ ] Freitags-Update 17:00 auf der VM eingerichtet (`npm-image-update.sh --install`,
+      hängt sich in guest-autoupdate ein, entfernt unattended-upgrades)
 - [ ] VM im Tailscale-Netz + SSH-Key hinterlegt (`ssh npm-vm`)
 - [ ] Backups zusätzlich außerhalb der VM ablegen (NAS o.ä.)
 

@@ -17,7 +17,10 @@
 #     Hook ein: /etc/guest-autoupdate/post.d/40-npm-image — also nach apt
 #     und vor dem Smoketest.
 #   - Sonst bekommt es einen eigenen Timer: npm-image-update.timer,
-#     freitags 17:00.
+#     freitags 17:00 — der spielt dann vorher auch die Debian-Pakete ein
+#     (--with-apt), sodass freitags alles auf einmal aktuell wird.
+#   - In beiden Fällen wird unattended-upgrades entfernt: ein Mechanismus,
+#     ein Termin, kein nächtlicher Neustart.
 #
 # Von Hand sofort ausführen:
 #   npm-image-update
@@ -39,7 +42,23 @@ LOG=/var/log/npm-image-update.log
 # ============================================================================
 # Einrichtung
 # ============================================================================
+# Frühere Repo-Versionen (npm-auto-updates.sh) richteten tägliche Updates
+# mit Neustart um 04:30 ein. Freitags-Update ersetzt das komplett.
+remove_unattended() {
+    rm -f /etc/apt/apt.conf.d/52npm-unattended-upgrades
+    cat > /etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
+APT::Periodic::Update-Package-Lists "0";
+APT::Periodic::Unattended-Upgrade "0";
+EOF
+    DEBIAN_FRONTEND=noninteractive apt-get -y -qq purge \
+        unattended-upgrades apt-listchanges >/dev/null 2>&1 || true
+    systemctl disable --now apt-daily-upgrade.timer apt-daily.timer >/dev/null 2>&1 || true
+    echo "→ unattended-upgrades entfernt, kein nächtlicher Neustart mehr"
+}
+
 install_self() {
+    remove_unattended
+
     install -m 0755 "$(readlink -f "${BASH_SOURCE[0]}")" "$BIN"
     echo "→ Script installiert: $BIN"
 
@@ -63,7 +82,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=$BIN
+ExecStart=$BIN --with-apt
 EOF
         cat > "$UNIT_DIR/npm-image-update.timer" <<EOF
 [Unit]
@@ -100,9 +119,30 @@ wait_for_npm() {
     return 1
 }
 
+# Nur im eigenen Timer-Modus: Debian-Pakete wie guest-autoupdate —
+# upgrade ohne Entfernen, nie Neustart, fälliger Neustart wird gemeldet.
+run_apt() {
+    echo "--- Debian-Pakete ---"
+    export DEBIAN_FRONTEND=noninteractive
+    # Ein apt-Fehler soll das NPM-Update nicht verhindern.
+    { apt-get -q -y -o DPkg::Lock::Timeout=600 update \
+        && apt-get -q -y -o DPkg::Lock::Timeout=600 --with-new-pkgs \
+            -o Dpkg::Options::=--force-confdef \
+            -o Dpkg::Options::=--force-confold upgrade; } \
+        || echo "FEHLER: apt-Update fehlgeschlagen, mache mit NPM weiter"
+    local newest
+    newest=$(find /boot -maxdepth 1 -name 'vmlinuz-*' -printf '%f\n' \
+        | sed 's/^vmlinuz-//' | sort -V | tail -1)
+    if [[ -e /run/reboot-required || ( -n "$newest" && "$newest" != "$(uname -r)" ) ]]; then
+        echo "→ HINWEIS: Neustart fällig (Kernel $newest installiert, $(uname -r) läuft) — bitte von Hand: reboot"
+    fi
+}
+
 run_update() {
     exec > >(tee -a "$LOG") 2>&1
     echo "=== $(date -Iseconds)  npm-image-update ==="
+    [[ "${1:-}" == "--with-apt" ]] && run_apt
+    echo "--- NPM-Image ---"
     cd "$NPM_DIR"
 
     local before after
@@ -141,5 +181,5 @@ run_update() {
 if [[ "${1:-}" == "--install" ]]; then
     install_self
 else
-    run_update
+    run_update "${1:-}"
 fi

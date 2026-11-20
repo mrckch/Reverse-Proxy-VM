@@ -75,6 +75,7 @@ Phase B installiert (alles automatisch):
 2. Docker Engine + Docker-Compose-Plugin
 3. Firewall (ufw) — erlaubt SSH, 80, 443, 81
 4. NPM-Container starten
+5. Tägliches Backup + Freitags-Update (freitags 17:00)
 
 Am Ende zeigt das Script:
 
@@ -173,8 +174,9 @@ docker compose up -d
 
 ## Phase 6 — Updates (VM + NPM)
 
-Der Proxy ist von außen erreichbar — halte ihn aktuell, am besten einmal
-im Monat. Auf der VM **als root**:
+Der Proxy ist von außen erreichbar — das Freitags-Update (unten) hält ihn
+aktuell. Bei einer akuten Lücke kannst du sofort von Hand aktualisieren,
+auf der VM **als root**:
 
 ```bash
 cd /opt/npm-bootstrap
@@ -193,46 +195,32 @@ Am Ende fragt es, ob die VM neu starten soll, falls ein neuer Kernel
 installiert wurde (~1 Minute Ausfall). Mit `--reboot` startet es ohne
 Rückfrage neu.
 
-### Automatische Sicherheitsupdates
+### Automatisches Update am Freitag
 
-Das Bootstrap richtet sie mit ein. Für ältere VMs einmalig **als root**:
-
-```bash
-cd /opt/npm-bootstrap
-./scripts/npm-auto-updates.sh
-```
-
-Debian spielt Sicherheitsupdates dann täglich von selbst ein. Braucht ein
-Update einen Neustart (z.B. neuer Kernel), startet die VM um **04:30**
-von selbst neu (~1 Minute Ausfall). Alte Kernel werden automatisch
-entfernt.
-
-**Nicht** automatisch aktualisiert werden Docker und NPM selbst — dafür
-bleibt `npm-update.sh` einmal im Monat nötig, oder du richtest das
-Freitags-Update ein (nächster Abschnitt).
-
-### Automatisches NPM-Update am Freitag
-
-Einmalig **als root**:
+Das Bootstrap richtet es mit ein. Für ältere VMs einmalig **als root**:
 
 ```bash
 cd /opt/npm-bootstrap && git pull && ./scripts/npm-image-update.sh --install
 ```
 
-Danach lädt die VM jeden **Freitag um 17:00** das neueste NPM-Image,
-macht vorher ein Backup, startet den Container neu und prüft, ob die
-Web-UI wieder antwortet (der Proxy ist dabei wenige Sekunden weg). Gibt
-es kein neues Image, passiert nichts. Die VM startet dabei nie neu.
+Danach wird die VM jeden **Freitag um 17:00** aktualisiert:
+1. Debian-Pakete inkl. Kernel und Docker
+2. Neuestes NPM-Image laden, vorher Backup, Container neu starten und
+   prüfen, ob die Web-UI wieder antwortet (der Proxy ist dabei wenige
+   Sekunden weg). Gibt es kein neues Image, passiert nichts.
 
-Läuft auf der VM schon das Freitags-Update `guest-autoupdate` (Debian-
-Pakete per Ansible), hängt sich das Script dort ein — nach den Paketen,
-vor dem Smoketest. Sonst bekommt es einen eigenen Timer.
+Die VM **startet dabei nie von selbst neu**. Ist ein Neustart fällig
+(neuer Kernel), steht das im Log — dann bei Gelegenheit `reboot`.
+
+Läuft auf der VM schon das Freitags-Update `guest-autoupdate` (per
+Ansible), übernimmt das die Debian-Pakete; das Script hängt sich dort
+nur fürs NPM-Image ein — nach den Paketen, vor dem Smoketest.
+
+Frühere Versionen dieses Repos haben tägliche Updates mit automatischem
+Neustart um 04:30 eingerichtet (unattended-upgrades). `--install` entfernt
+das: ein Termin, kein nächtlicher Neustart.
 
 Sofort von Hand: `npm-image-update` · Log: `/var/log/npm-image-update.log`
-
-Neustart lieber selbst bestimmen? In
-`/etc/apt/apt.conf.d/52npm-unattended-upgrades` bei `Automatic-Reboot`
-aus `"true"` ein `"false"` machen.
 
 ### Nur NPM aktualisieren
 

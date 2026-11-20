@@ -411,12 +411,12 @@ EOF
 }
 
 phase_b_maintenance() {
-    echo "=== Phase B [5/5] Tägliches Backup + automatische Sicherheitsupdates ==="
+    echo "=== Phase B [5/5] Tägliches Backup + Freitags-Update ==="
     local dir
     dir=$(dirname "$COMPOSE_SRC")/../scripts
-    if [[ -x "$dir/npm-backup.sh" && -x "$dir/npm-auto-updates.sh" ]]; then
+    if [[ -x "$dir/npm-backup.sh" && -x "$dir/npm-image-update.sh" ]]; then
         "$dir/npm-backup.sh" --install
-        "$dir/npm-auto-updates.sh"
+        "$dir/npm-image-update.sh" --install
     else
         echo "WARN: $dir nicht gefunden — Backup + Auto-Updates später einrichten (siehe docs/npm-setup.md)."
     fi
