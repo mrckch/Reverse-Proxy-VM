@@ -40,12 +40,12 @@ Bootstrap-Scripts, die alles abnehmen.
 - [x] Erste Site (Domain → Backend) erfolgreich angelegt
 - [x] Backup-Strategie eingerichtet (täglich 03:00, siehe docs/npm-setup.md Phase 5)
 - [x] ~~unattended-upgrades täglich mit Reboot 04:30~~ — abgelöst (Nov 2026)
-- [ ] Freitags-Update 17:00 auf der VM eingerichtet (`npm-image-update.sh --install`,
+- [x] Freitags-Update 17:00 auf der VM eingerichtet (`npm-image-update.sh --install`,
       hängt sich in guest-autoupdate ein, schaltet Reboot 04:30 ab)
-- [ ] Sicherheitsupdates + Neustart Samstag 05:00 (`npm-security-updates.sh --install`)
+- [x] Sicherheitsupdates + Neustart Samstag 05:00 (`npm-security-updates.sh --install`)
       — bewusste Ausnahme von der Hauskonvention „nie automatisch neu starten“,
       weil der Proxy das zentrale Einfallstor ist
-- [ ] VM im Tailscale-Netz + SSH-Key hinterlegt (`ssh npm-vm`)
+- [x] VM im Tailscale-Netz (npm-proxy) + SSH-Key hinterlegt (`ssh npm-vm`, 20.11.2026)
 - [ ] Backups zusätzlich außerhalb der VM ablegen (NAS o.ä.)
 
 (Diese Checkliste bei Fortschritt aktualisieren!)
