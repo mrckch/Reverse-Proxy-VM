@@ -146,6 +146,8 @@ run_update() {
     cd "$NPM_DIR"
 
     local before after
+    # Nach einem Docker-Update (apt direkt davor) fährt NPM evtl. noch hoch.
+    wait_for_npm || true
     before=$(npm_version || true)
 
     docker compose pull -q
