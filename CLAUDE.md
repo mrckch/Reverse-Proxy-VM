@@ -39,9 +39,12 @@ Bootstrap-Scripts, die alles abnehmen.
 - [x] Erstes Login in NPM-Web-UI + Default-Passwort geändert
 - [x] Erste Site (Domain → Backend) erfolgreich angelegt
 - [x] Backup-Strategie eingerichtet (täglich 03:00, siehe docs/npm-setup.md Phase 5)
-- [x] ~~unattended-upgrades mit Reboot 04:30~~ — ersetzt durch Freitags-Update (Hauskonvention: nie automatisch neu starten)
+- [x] ~~unattended-upgrades täglich mit Reboot 04:30~~ — abgelöst (Nov 2026)
 - [ ] Freitags-Update 17:00 auf der VM eingerichtet (`npm-image-update.sh --install`,
-      hängt sich in guest-autoupdate ein, entfernt unattended-upgrades)
+      hängt sich in guest-autoupdate ein, schaltet Reboot 04:30 ab)
+- [ ] Sicherheitsupdates + Neustart Samstag 05:00 (`npm-security-updates.sh --install`)
+      — bewusste Ausnahme von der Hauskonvention „nie automatisch neu starten“,
+      weil der Proxy das zentrale Einfallstor ist
 - [ ] VM im Tailscale-Netz + SSH-Key hinterlegt (`ssh npm-vm`)
 - [ ] Backups zusätzlich außerhalb der VM ablegen (NAS o.ä.)
 
@@ -53,6 +56,7 @@ Bootstrap-Scripts, die alles abnehmen.
 - `cd /opt/npm && docker compose pull && docker compose up -d` — Update
 - `cd /opt/npm-bootstrap && git pull && ./scripts/npm-update.sh` — Komplett-Update (Backup, Debian, Docker, NPM)
 - `npm-image-update` — NPM-Image sofort aktualisieren (sonst freitags 17:00)
+- `npm-security-updates` — Sicherheitsupdates sofort, startet ggf. neu (sonst Sa 05:00)
 - `npm-backup` — Backup sofort auslösen (liegt unter `/var/backups/npm/`)
 
 ## Historie

@@ -75,7 +75,7 @@ Phase B installiert (alles automatisch):
 2. Docker Engine + Docker-Compose-Plugin
 3. Firewall (ufw) — erlaubt SSH, 80, 443, 81
 4. NPM-Container starten
-5. Tägliches Backup + Freitags-Update (freitags 17:00)
+5. Tägliches Backup, Freitags-Update (17:00), Sicherheitsupdates mit Neustart (Samstag 05:00)
 
 Am Ende zeigt das Script:
 
@@ -209,18 +209,37 @@ Danach wird die VM jeden **Freitag um 17:00** aktualisiert:
    prüfen, ob die Web-UI wieder antwortet (der Proxy ist dabei wenige
    Sekunden weg). Gibt es kein neues Image, passiert nichts.
 
-Die VM **startet dabei nie von selbst neu**. Ist ein Neustart fällig
-(neuer Kernel), steht das im Log — dann bei Gelegenheit `reboot`.
+Am Freitag **startet die VM nicht neu** — das passiert am Samstag
+(nächster Abschnitt).
 
 Läuft auf der VM schon das Freitags-Update `guest-autoupdate` (per
 Ansible), übernimmt das die Debian-Pakete; das Script hängt sich dort
 nur fürs NPM-Image ein — nach den Paketen, vor dem Smoketest.
 
 Frühere Versionen dieses Repos haben tägliche Updates mit automatischem
-Neustart um 04:30 eingerichtet (unattended-upgrades). `--install` entfernt
-das: ein Termin, kein nächtlicher Neustart.
+Neustart um 04:30 eingerichtet. `--install` schaltet das ab.
 
 Sofort von Hand: `npm-image-update` · Log: `/var/log/npm-image-update.log`
+
+### Sicherheitsupdates mit Neustart am Samstag
+
+Der Proxy ist das zentrale Einfallstor ins Netz. Deshalb bekommt er
+einen festen Termin, an dem Lücken auch per Neustart wirklich
+geschlossen werden: **Samstag um 05:00** — da ist kaum etwas los.
+
+Das Bootstrap richtet es mit ein. Für ältere VMs einmalig **als root**:
+
+```bash
+cd /opt/npm-bootstrap && git pull && ./scripts/npm-security-updates.sh --install
+```
+
+Ablauf: Debian-Sicherheitsupdates einspielen, dann **neu starten, falls
+nötig** (neuer Kernel oder Systembibliotheken, ~1 Minute Proxy-Ausfall).
+Ein Kernel, den das Freitags-Update installiert hat, wird so spätestens
+Samstagfrüh aktiv. Ist nichts zu tun, startet die VM nicht neu.
+
+Sofort von Hand (startet ggf. neu!): `npm-security-updates` ·
+Log: `/var/log/npm-security-updates.log`
 
 ### Nur NPM aktualisieren
 

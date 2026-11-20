@@ -19,8 +19,9 @@
 #   - Sonst bekommt es einen eigenen Timer: npm-image-update.timer,
 #     freitags 17:00 — der spielt dann vorher auch die Debian-Pakete ein
 #     (--with-apt), sodass freitags alles auf einmal aktuell wird.
-#   - In beiden Fällen wird unattended-upgrades entfernt: ein Mechanismus,
-#     ein Termin, kein nächtlicher Neustart.
+#   - In beiden Fällen werden die alten täglichen Updates mit Neustart
+#     04:30 abgeschaltet. Sicherheitsupdates + Neustart kommen samstags
+#     05:00 über npm-security-updates.sh.
 #
 # Von Hand sofort ausführen:
 #   npm-image-update
@@ -43,21 +44,20 @@ LOG=/var/log/npm-image-update.log
 # Einrichtung
 # ============================================================================
 # Frühere Repo-Versionen (npm-auto-updates.sh) richteten tägliche Updates
-# mit Neustart um 04:30 ein. Freitags-Update ersetzt das komplett.
-remove_unattended() {
+# mit Neustart um 04:30 ein. Das wird abgeschaltet; das Paket selbst bleibt,
+# weil npm-security-updates.sh es samstags 05:00 nutzt.
+remove_legacy_daily() {
     rm -f /etc/apt/apt.conf.d/52npm-unattended-upgrades
     cat > /etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
 APT::Periodic::Update-Package-Lists "0";
 APT::Periodic::Unattended-Upgrade "0";
 EOF
-    DEBIAN_FRONTEND=noninteractive apt-get -y -qq purge \
-        unattended-upgrades apt-listchanges >/dev/null 2>&1 || true
     systemctl disable --now apt-daily-upgrade.timer apt-daily.timer >/dev/null 2>&1 || true
-    echo "→ unattended-upgrades entfernt, kein nächtlicher Neustart mehr"
+    echo "→ tägliche Updates mit Neustart 04:30 abgeschaltet"
 }
 
 install_self() {
-    remove_unattended
+    remove_legacy_daily
 
     install -m 0755 "$(readlink -f "${BASH_SOURCE[0]}")" "$BIN"
     echo "→ Script installiert: $BIN"
