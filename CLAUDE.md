@@ -16,7 +16,8 @@ Bootstrap-Scripts, die alles abnehmen.
   mit systemd-run-Reboot, Phase B (auto-resume nach Reboot) installiert
   Docker + NPM
 - Web-UI nur im LAN erreichbar (kein Tailscale by default, kein
-  Public-Access)
+  Public-Access). Optional: `scripts/npm-tailscale.sh` bringt die VM ins
+  Tailnet (auf der eigenen VM so genutzt, damit Claude per SSH-Key prüfen kann)
 
 ## Konventionen
 - Shell-Scripts: bash, `set -euo pipefail`, ShellCheck-clean
@@ -28,7 +29,8 @@ Bootstrap-Scripts, die alles abnehmen.
 ## Was nie ins Repo darf
 - Echte Domains (nutze example.com / beispiel.de in Beispielen)
 - Backend-IPs aus dem realen Heimnetz (Platzhalter wie 10.0.0.50 / 192.168.1.30)
-- Zertifikate, Keys, Passwörter
+- Zertifikate, private Keys, Passwörter (Ausnahme: der **öffentliche**
+  SSH-Key `scripts/keys/claude-code.pub` für `npm-tailscale.sh --claude`)
 - NPM-Datenbank (liegt unter `/opt/npm/data/`, nie im Repo)
 
 ## Stand des Projekts
@@ -38,6 +40,7 @@ Bootstrap-Scripts, die alles abnehmen.
 - [x] Erste Site (Domain → Backend) erfolgreich angelegt
 - [x] Backup-Strategie eingerichtet (täglich 03:00, siehe docs/npm-setup.md Phase 5)
 - [x] Automatische Sicherheitsupdates (unattended-upgrades, Reboot 04:30)
+- [ ] VM im Tailscale-Netz + SSH-Key hinterlegt (`ssh npm-vm`)
 - [ ] Backups zusätzlich außerhalb der VM ablegen (NAS o.ä.)
 
 (Diese Checkliste bei Fortschritt aktualisieren!)

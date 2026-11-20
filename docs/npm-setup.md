@@ -250,7 +250,17 @@ konfigurieren, von außerhalb gar nicht erreichbar.
 Wenn du das später ändern willst (z.B. „mal von unterwegs einloggen"):
 
 1. **VPN ins Heimnetz** — empfohlen. Z.B. WireGuard auf dem Router (FritzBox, OPNsense, etc.) oder als eigener Container neben NPM. Damit landest du im LAN und erreichst alles, inkl. NPM-Web-UI.
-2. **Tailscale** auf der VM (`apt install tailscale && tailscale up --ssh`). Geräte mit Tailscale-Client können dann die VM über die Tailscale-IP ansprechen. Komfortabler als Wireguard, aber abhängig vom Tailscale-SaaS.
+2. **Tailscale** auf der VM — dafür gibt es ein fertiges Script:
+   ```bash
+   cd /opt/npm-bootstrap && git pull
+   ./scripts/npm-tailscale.sh                                   # nur Tailscale
+   ./scripts/npm-tailscale.sh --key "ssh-ed25519 AAAA... name"  # + SSH-Key für root
+   ```
+   Im Terminal erscheint ein Login-Link — im Browser öffnen und die VM
+   freigeben. Danach erreichen alle Geräte mit Tailscale-Client die VM
+   über ihre Tailscale-IP (Web-UI auf Port 81, SSH). Komfortabler als
+   WireGuard, aber abhängig vom Tailscale-Dienst. DNS der VM bleibt
+   unverändert.
 3. **Web-UI über NPM selbst publizieren** — wäre möglich (eigener Proxy-Host mit Access-List/Basic-Auth), ist aber für die Admin-Oberfläche eines Reverse-Proxys ein vermeidbares Risiko. Lieber Variante 1 oder 2.
 
 ### Was passiert, wenn die VM ausfällt?
