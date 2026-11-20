@@ -40,6 +40,8 @@ Bootstrap-Scripts, die alles abnehmen.
 - [x] Erste Site (Domain → Backend) erfolgreich angelegt
 - [x] Backup-Strategie eingerichtet (täglich 03:00, siehe docs/npm-setup.md Phase 5)
 - [x] Automatische Sicherheitsupdates (unattended-upgrades, Reboot 04:30)
+- [ ] NPM-Image-Update freitags 17:00 (`npm-image-update.sh --install`,
+      hängt sich in guest-autoupdate ein)
 - [ ] VM im Tailscale-Netz + SSH-Key hinterlegt (`ssh npm-vm`)
 - [ ] Backups zusätzlich außerhalb der VM ablegen (NAS o.ä.)
 
@@ -50,6 +52,7 @@ Bootstrap-Scripts, die alles abnehmen.
 - `cd /opt/npm && docker compose logs npm` — Logs
 - `cd /opt/npm && docker compose pull && docker compose up -d` — Update
 - `cd /opt/npm-bootstrap && git pull && ./scripts/npm-update.sh` — Komplett-Update (Backup, Debian, Docker, NPM)
+- `npm-image-update` — NPM-Image sofort aktualisieren (sonst freitags 17:00)
 - `npm-backup` — Backup sofort auslösen (liegt unter `/var/backups/npm/`)
 
 ## Historie

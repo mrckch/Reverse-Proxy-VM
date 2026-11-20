@@ -208,7 +208,27 @@ von selbst neu (~1 Minute Ausfall). Alte Kernel werden automatisch
 entfernt.
 
 **Nicht** automatisch aktualisiert werden Docker und NPM selbst — dafür
-bleibt `npm-update.sh` einmal im Monat nötig.
+bleibt `npm-update.sh` einmal im Monat nötig, oder du richtest das
+Freitags-Update ein (nächster Abschnitt).
+
+### Automatisches NPM-Update am Freitag
+
+Einmalig **als root**:
+
+```bash
+cd /opt/npm-bootstrap && git pull && ./scripts/npm-image-update.sh --install
+```
+
+Danach lädt die VM jeden **Freitag um 17:00** das neueste NPM-Image,
+macht vorher ein Backup, startet den Container neu und prüft, ob die
+Web-UI wieder antwortet (der Proxy ist dabei wenige Sekunden weg). Gibt
+es kein neues Image, passiert nichts. Die VM startet dabei nie neu.
+
+Läuft auf der VM schon das Freitags-Update `guest-autoupdate` (Debian-
+Pakete per Ansible), hängt sich das Script dort ein — nach den Paketen,
+vor dem Smoketest. Sonst bekommt es einen eigenen Timer.
+
+Sofort von Hand: `npm-image-update` · Log: `/var/log/npm-image-update.log`
 
 Neustart lieber selbst bestimmen? In
 `/etc/apt/apt.conf.d/52npm-unattended-upgrades` bei `Automatic-Reboot`
